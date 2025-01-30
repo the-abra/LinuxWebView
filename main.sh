@@ -35,18 +35,18 @@ fi
 
 # Compile the application
 log.info "Compiling the application..."
-gcc main.c -o build/webview-app \
+gcc main.c -o webview-app.AppDir/usr/bin/webview-app \
     $(pkg-config --cflags --libs webkit2gtk-4.0 gtk+-3.0) \
-    -static-libgcc -static-libstdc++ || {
+    -static-libgcc -static-libstdc++ &> /home/gccbuild.log || {
         log.error "Compilation failed."
         exit 1
     }
 
-log.done "GCC build completed successfully. Moving -> webview-app.AppDir/usr/bin/"
-cp build/webview-app webview-app.AppDir/usr/bin/
+log.done "GCC build completed successfully."
+log.sub "SAVED -> webview-app.AppDir/usr/bin/webview-app"
 
-# Generate the AppImage
-cd webview-app.AppDir
-appimagetool --no-appstream .
+# Generate the AppImage and try to run
+! [[ -d build ]] && mkdir build
+appimagetool webview-app.AppDir build/webview-app.AppImage &> /home/appimagebuild.log
 
-./webview-app-x86_64.AppImage || log.error "Run Faild, try on host machine."
+./build/webview-app.AppImage || log.error "Run Faild, try on host machine."

@@ -53,12 +53,12 @@ This script will:
             log.error "Failed to download AppImageTool. Exiting..."
             exit 1
             }
+
+### Create webview-app.AppDir if doesn't exist
     chmod +x "$APPIMAGE_TOOL"
     mkdir -p webview-app.AppDir/usr/bin
     mkdir -p webview-app.AppDir/usr/share/applications
     mkdir -p webview-app.AppDir/usr/share/icons
-    cp src/webview.desktop webview-app.AppDir/usr/share/applications/webview.desktop
-    cp src/webview.png webview-app.AppDir/usr/share/icons/webview.png
     log.info "AppImageTool installed successfully."   
 
 
