@@ -16,7 +16,7 @@ jobs:
       
       - name: Run Build Script
         run: |
-           ./main.sh workflow
+           sudo ./main.sh workflow
         shell: bash
 
       - name: Upload AppImage Artifact (For Debugging)
