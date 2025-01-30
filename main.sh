@@ -13,8 +13,10 @@ if ! command -v gcc &>/dev/null; then
     log.info "Setting up dependencies..."
     
     # Update package list and install required dependencies
-    if ! pacman -Sy --noconfirm gcc webkit2gtk gtk3 flatpak flatpak-builder git base-devel cmake wget; then
+    if ! pacman -Sy --noconfirm gcc webkit2gtk gtk3 flatpak flatpak-builder git base-devel fuse2 cmake wget; then
         log.error "Failed to install dependencies. Exiting..."
+        log.sub "try to install manualy."
+        [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
         exit 1
     fi
 
@@ -27,11 +29,6 @@ if ! command -v gcc &>/dev/null; then
             exit 1
         }
         chmod +x "$APPIMAGE_TOOL"
-        mkdir -p webview-app.AppDir/usr/bin
-        mkdir -p webview-app.AppDir/usr/share/applications
-        mkdir -p webview-app.AppDir/usr/share/icons
-        cp src/webview.desktop webview-app.AppDir/usr/share/applications/webview.desktop
-        cp src/webview.png webview-app.AppDir/usr/share/icons/webview.png
         log.info "AppImageTool installed successfully."
     fi
 fi
@@ -45,8 +42,8 @@ gcc main.c -o build/webview-app \
         exit 1
     }
 
-log.success "GCC build completed successfully. Moving -> webview-app.AppDir/usr/bin/"
-mv webview-app webview-app.AppDir/usr/bin/
+log.done "GCC build completed successfully. Moving -> webview-app.AppDir/usr/bin/"
+cp build/webview-app webview-app.AppDir/usr/bin/
 
 # Generate the AppImage
 cd webview-app.AppDir
