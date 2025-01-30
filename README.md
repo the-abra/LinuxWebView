@@ -17,8 +17,6 @@ Before building and running the project, ensure the following dependencies are i
 | **gcc**                  | GNU C compiler                                  |
 | **webkit2gtk**           | Web rendering engine                            |
 | **gtk3**                 | GUI toolkit for Linux applications              |
-| **flatpak**              | Software deployment tool                        |
-| **flatpak-builder**      | Build environment for Flatpak apps              |
 | **base-devel**           | Essential development tools                     |
 | **cmake**                | Cross-platform build system                     |
 | **wget**                 | File downloader for retrieving dependencies     |
