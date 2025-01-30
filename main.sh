@@ -14,13 +14,13 @@ if ! command -v gcc &>/dev/null; then
     
     # Update package list and install required dependencies
 
-    if ! ( apt update && apt install -y gcc g++ make cmake file libwebkit2gtk-4.0-dev libgtk-3-dev git build-essential libfuse2 wget gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly ); then
+    if ! ( apt update && apt install -y gcc g++ make cmake file libwebkit2gtk-4.0-dev libgtk-3-dev build-essential libfuse2 wget gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly ); then
         log.error "Failed to install dependencies. Exiting..."
         log.sub "try to install manualy."
         [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
         exit 1
     else
-        pacman -Sy --noconfirm gcc file webkit2gtk gtk3 git base-devel fuse2 cmake wget || {
+        pacman -Sy --noconfirm gcc file webkit2gtk gtk3 base-devel fuse2 cmake wget || {
         log.error "Failed to install dependencies. Exiting..."
         log.sub "try to install manualy."
         [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
@@ -45,7 +45,7 @@ fi
 log.info "Compiling the application..."
 
 gcc main.c -o webview-app.AppDir/usr/bin/webview-app \
-    $(pkg-config --cflags --libs webkit2gtk-4.0 gtk+-3.0) \
+    $(pkg-config --cflags --libs  webkit2gtk-4.0 gtk+-3.0) \
     -static-libgcc -static-libstdc++ &> /home/gccbuild.log || {
         log.error "Compilation failed."
         log.sub "LOG: /home/gccbuild.log"
