@@ -1,0 +1,140 @@
+#!/bin/bash
+# database.lib - Functions for SQLite database operations
+
+! command -v sqlite3 &> /dev/null  && echo -e "SQLite3 database is not available on your system" && return 1
+
+# Functions
+
+# Create a new SQLite database file
+sqlite3.create_db() {
+    local db_file="$1"
+    if [ -f "$db_file" ]; then
+        echo "Database already exists: $db_file"
+    else
+        sqlite3 "$db_file" ".databases"
+        echo "Database created: $db_file"
+    fi
+}
+
+# Create a new table in the SQLite database
+sqlite3.create_table() {
+    local db_file="$1"
+    local table_name="$2"
+    local schema="$3"
+    if [[ -z "$db_file" || -z "$table_name" || -z "$schema" ]]; then
+        echo "Error: Missing arguments. Usage: create_table <db_file> <table_name> <schema>"
+        return 1
+    fi
+    if ! [[ -z $(sqlite3 "$db_file" ".schema $table_name") ]] &>/dev/null; then
+        echo "Table '$table_name' already exists in '$db_file'."
+    else
+        if sqlite3 "$db_file" "CREATE TABLE $table_name ($schema);"; then
+            echo "Table '$table_name' created successfully in '$db_file'."
+        else
+            echo "Error: Failed to create table '$table_name' in '$db_file'."
+            return 1
+        fi
+    fi
+
+}
+
+# Insert data into a table
+sqlite3.insert() {
+    local db_file="$1"
+    local table_name="$2"
+    local columns="$3"
+    local values="$4"
+    sqlite3 "$db_file" "INSERT INTO $table_name ($columns) VALUES ($values);" || exit 1;
+    echo "Data inserted into '$table_name'."
+}
+
+# Query data from a table
+sqlite3.query() {
+    local db_file="$1"
+    local table_name="$2"
+    local select="$3"
+    local where_clause="$4"
+    
+    [[ -z $select ]] && select="*"
+    [[ -z $where_clause ]] && where_clause="1=1" # No filtering if where_clause is empty
+    
+    sqlite3 "$db_file" "SELECT $select FROM $table_name WHERE $where_clause;"
+}
+
+
+# Update data in a table
+sqlite3.update() {
+    local db_file="$1"
+    local table_name="$2"
+    local where_clause="$3"
+    local set_clause="$4"
+    sqlite3 "$db_file" "UPDATE $table_name SET $set_clause WHERE $where_clause;"
+    echo "Data updated in '$table_name'."
+}
+
+# Delete data from a table
+sqlite3.delete() {
+    local db_file="$1"
+    if [[ -z $2 ]]; then
+        if rm -f "$db_file" &> /dev/null; then
+            echo -e "$db_file deleted successfully." && return 0
+        else
+            echo -e "$db_file failed to be delete." && return 1
+        fi
+    fi
+    local table_name="$2"
+    local where_clause="$3"
+    sqlite3 "$db_file" "DELETE FROM $table_name WHERE $where_clause;"
+    echo "Data deleted from '$table_name'."
+}
+
+
+# Example usage:
+sqlite3.test() {
+ local db="example.db"
+ sqlite3.create_db       "$db"
+ sqlite3.create_table    "$db" "users" "id INTEGER PRIMARY KEY, name TEXT, age INTEGER"
+ sqlite3.insert          "$db" "users" "name, age" "'John Doe', 30"
+ sqlite3.query           "$db" 'users' '*' 'id=1'
+ sqlite3.update          "$db" "users" "name='John Doe'" "age=60"
+ sqlite3.query           "$db" 'users' '*' 'id=1'
+ sqlite3.delete          "$db" "users" "name='John Doe'"
+ sqlite3.delete          "$db"
+}
+
+# Display usage information for the SQLite functions
+sqlite3.usage() {
+    echo "Usage: source sqlite3.lib"
+    echo
+    echo "Available functions:"
+    echo
+    echo "  sqlite3.create_db <db_file>"
+    echo "      Creates a new SQLite database file."
+    echo
+    echo "  sqlite3.create_table <db_file> <table_name> <schema>"
+    echo "      Creates a new table in the SQLite database."
+    echo "      Example: sqlite3.create_table example.db users 'id INTEGER PRIMARY KEY, name TEXT, age INTEGER'"
+    echo
+    echo "  sqlite3.insert <db_file> <table_name> <columns> <values>"
+    echo "      Inserts data into a table in the SQLite database."
+    echo "      Example: sqlite3.insert example.db users 'name, age' \"'John Doe', 30\""
+    echo
+    echo "  sqlite3.query <db_file> <table_name> [select] [where_clause]"
+    echo "      Queries data from a table in the SQLite database."
+    echo "      Example: sqlite3.query example.db users '*' 'id=1'"
+    echo
+    echo "  sqlite3.update <db_file> <table_name> <set_clause> <where_clause>"
+    echo "      Updates data in a table in the SQLite database."
+    echo "      Example: sqlite3.update example.db users 'age=31' 'name=\"John Doe\"'"
+    echo
+    echo "  sqlite3.delete <db_file> <table_name> <where_clause>"
+    echo "      Deletes data from a table in the SQLite database."
+    echo "      Example: sqlite3.delete example.db users 'name=\"John Doe\"'"
+    echo
+    echo "  sqlite3.delete <db_file>"
+    echo "      Deletes the SQLite database file."
+    echo
+    echo "  sqlite3.test"
+    echo "      Runs a test to demonstrate the functions."
+    echo
+}
