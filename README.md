@@ -63,7 +63,7 @@ This script will:
 
 Once set up, you can run the application with:  
 ```bash
-./webview-app
+bash main.sh
 ```
 
 ## ✅ How to Trigger the Release
