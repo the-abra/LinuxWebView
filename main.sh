@@ -49,6 +49,7 @@ gcc main.c -o webview-app.AppDir/usr/bin/webview-app \
     -static-libgcc -static-libstdc++ &> /home/gccbuild.log || {
         log.error "Compilation failed."
         log.sub "LOG: /home/gccbuild.log"
+        [[ $1 =~ (workflow|CI|CD) ]] && cat /home/gccbuild.log
         exit 1
     }
 
@@ -61,6 +62,7 @@ rm build/* &> /dev/null
 appimagetool webview-app.AppDir build/webview.AppImage &> /home/appimagebuild.log || {
     log.error "AppImage Build Failed"
     log.sub "LOG: /home/appimagebuild.log"
+    [[ $1 =~ (workflow|CI|CD) ]] && cat /home/appimagebuild.log
     exit 1
 }
 log.done "AppImage build completed successfully."
@@ -72,6 +74,7 @@ if ! [[ $1 =~ (workflow|CI|CD) ]]; then
     ./build/webview.AppImage https://www.google.com &> /home/appimagerun.log || { 
         log.error "Run Faild, try on host machine." 
         log.sub "LOG: /home/appimagerun.log"
+        [[ $1 =~ (workflow|CI|CD) ]] && cat /home/appimagerun.log
         exit 1 
     }
 fi
