@@ -68,9 +68,19 @@ bash main.sh
 
 ## ✅ How to Trigger the Release
 
-Push a new version tag:
+Push a new version with tag:
 
-    git tag v1.0.0
-    git push origin v1.0.0
+    git add .
+    git commit -m "Your commit message"
+
+    git tag -a v1.x -m "Release version 1.x"
+
+    git push origin v1.x
+
+## ✅ How to Delete the Tag
+
+    git tag -d v1.0.1          # Delete local tag
+    git push origin --delete v1.0.1  # Delete remote tag
+    
 
 This will automatically build and release your AppImage! 🚀
