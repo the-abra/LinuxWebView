@@ -1,8 +1,6 @@
 # LinuxWebView
 Web View System for Linux
 
-Here's the improved **Depends** and **Setup** section for your `README.md`, incorporating your dependency list with clear descriptions.  
-
 ---
 
 # 📌 **Dependencies & Setup**  
@@ -65,7 +63,7 @@ This script will:
 
 Once set up, you can run the application with:  
 ```bash
-./webview-app
+bash main.sh
 ```
 
 ## ✅ How to Trigger the Release
