@@ -1,8 +1,6 @@
 # LinuxWebView
 Web View System for Linux
 
-Here's the improved **Depends** and **Setup** section for your `README.md`, incorporating your dependency list with clear descriptions.  
-
 ---
 
 # 📌 **Dependencies & Setup**  
