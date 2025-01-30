@@ -7,6 +7,9 @@ else
     export GDK_BACKEND=x11
 fi
 
+export GST_PLUGIN_PATH="$APPDIR/usr/lib/gstreamer-1.0"
+export LD_LIBRARY_PATH="$APPDIR/usr/lib:$LD_LIBRARY_PATH"
+
 # Run the application
 HERE="$(dirname "$(readlink -f "$0")")"
 exec "$HERE/usr/bin/webview-app" "$@"
