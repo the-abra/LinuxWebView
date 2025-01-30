@@ -1,3 +1,12 @@
 #!/bin/sh
+# Detect display backend and set correct environment variables
+if [ -n "$WAYLAND_DISPLAY" ]; then
+    export GDK_BACKEND=wayland
+    export WEBKIT_DISABLE_COMPOSITING_MODE=1
+else
+    export GDK_BACKEND=x11
+fi
+
+# Run the application
 HERE="$(dirname "$(readlink -f "$0")")"
 exec "$HERE/usr/bin/webview-app" "$@"

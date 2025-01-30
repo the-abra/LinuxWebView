@@ -49,4 +49,7 @@ log.sub "SAVED -> webview-app.AppDir/usr/bin/webview-app"
 ! [[ -d build ]] && mkdir build
 appimagetool webview-app.AppDir build/webview-app.AppImage &> /home/appimagebuild.log
 
-./build/webview-app.AppImage || log.error "Run Faild, try on host machine."
+log.info "Trying to run."
+./build/webview-app.AppImage &> /home/appimagerun.log || { 
+    log.error "Run Faild, try on host machine." && exit 1 
+    }

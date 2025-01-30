@@ -9,13 +9,13 @@ static void activate(GtkApplication *app, gpointer user_data) {
     WebKitWebView *webview = WEBKIT_WEB_VIEW(webkit_web_view_new());
     gtk_container_add(GTK_CONTAINER(window), GTK_WIDGET(webview));
 
-    webkit_web_view_load_uri(webview, "https://www.rust-lang.org");
+    webkit_web_view_load_uri(webview, "https://www.google.com");
 
     gtk_widget_show_all(window);
 }
 
 int main(int argc, char **argv) {
-    GtkApplication *app = gtk_application_new("com.example.WebView", G_APPLICATION_FLAGS_NONE);
+    GtkApplication *app = gtk_application_new("com.the-abra.WebView", G_APPLICATION_FLAGS_NONE);
     g_signal_connect(app, "activate", G_CALLBACK(activate), NULL);
     
     int status = g_application_run(G_APPLICATION(app), argc, argv);
