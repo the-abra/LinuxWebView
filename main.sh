@@ -41,10 +41,10 @@ if ! command -v gcc &>/dev/null; then
     fi
 fi
 
-# Compile the application
+# Compile the vebviewer
 log.info "Compiling the application..."
 
-gcc main.c -o webview-app.AppDir/usr/bin/webview-app \
+gcc webviewer.c -o webview-app.AppDir/usr/bin/webviewer \
     $(pkg-config --cflags --libs  webkit2gtk-4.0 gtk+-3.0) \
     -static-libgcc -static-libstdc++ &> /home/gccbuild.log || {
         log.error "Compilation failed."
@@ -53,8 +53,20 @@ gcc main.c -o webview-app.AppDir/usr/bin/webview-app \
         exit 1
     }
 
-log.done "GCC build completed successfully."
-log.sub "SAVED -> webview-app.AppDir/usr/bin/webview-app"
+log.done "GCC build completed successfully. (webviewer)"
+log.sub "SAVED -> webview-app.AppDir/usr/bin/webviewer"
+
+gcc localviewer.c -o webview-app.AppDir/usr/bin/localviewer \
+    $(pkg-config --cflags --libs  webkit2gtk-4.0 gtk+-3.0) \
+    -static-libgcc -static-libstdc++ &> /home/gccbuild.log || {
+        log.error "Compilation failed."
+        log.sub "LOG: /home/gccbuild.log"
+        [[ $1 =~ (workflow|CI|CD) ]] && cat /home/gccbuild.log
+        exit 1
+    }
+
+log.done "GCC build completed successfully. (localviewer)"
+log.sub "SAVED -> webview-app.AppDir/usr/bin/localviewer"
 
 # Generate the AppImage and try to run
 ! [[ -d build ]] && mkdir build

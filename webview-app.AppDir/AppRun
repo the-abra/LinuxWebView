@@ -12,4 +12,22 @@ export LD_LIBRARY_PATH="$APPDIR/usr/lib:$LD_LIBRARY_PATH"
 
 # Run the application
 HERE="$(dirname "$(readlink -f "$0")")"
-exec "$HERE/usr/bin/webview-app" "$@"
+
+if [[ "$@" =~ ^(http) ]]; then
+    exec "$HERE/usr/bin/webviewer" "$@"
+elif [[ "$@" =~ (.html) ]]; then
+    if [[ "$@" =~ ^(/) ]]; then
+        ! [[ -f "$@" ]] && echo -e "ERROR: File Not Found! ($@)" && exit 1
+        exec "$HERE/usr/bin/localviewer" "$@"
+    else
+        ! [[ -f "$PWD/$@" ]] && echo -e "ERROR: File Not Found! ($PWD/$@)" && exit 1
+        exec "$HERE/usr/bin/localviewer" "$PWD/$@"
+    fi
+else
+    # Uncomment and run html file :)
+    #exec "$HERE/usr/bin/localviewer" $HERE/usr/web/index.html
+    echo -e "You can just set path of html file or valid URL!"
+    exit 1
+fi
+
+
