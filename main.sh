@@ -83,6 +83,45 @@ gcc notify.c -o webview-app.AppDir/usr/bin/notify \
 log.done "GCC build completed successfully. (notify)"
 log.sub "SAVED -> webview-app.AppDir/usr/bin/notify"
 
+#---------------------------------------------------------------------
+
+# Define the target directory
+TARGET_DIR="webview-app.AppDir/usr/lib"
+
+# Create the target directory if it doesn't exist
+mkdir -p "$TARGET_DIR"
+
+# List of library names
+libs=(
+    "libgio-2.0.so"
+    "libglib-2.0.so"
+    "libgobject-2.0.so"
+    "libgtk-3.so"
+    "libjavascriptcoregtk-4.0.so"
+    "libwebkit2gtk-4.0.so"
+)
+
+log.info "Copying libraries to $TARGET_DIR..."
+
+! [[ -d  webview-app.AppDir/usr/lib/webkit2gtk-4.0/ ]] && log.sub "Copying usr/lib/webkit2gtk-4.0/" && cp -r /usr/lib/webkit2gtk-4.0/ webview-app.AppDir/usr/lib
+
+# Loop trough each library and check they are exist, if it is copy it to the target directory
+for lib in "${libs[@]}"; do
+    path=$(ldconfig -p | grep "$lib" | awk '{print $NF}' | head -n 1)
+    if ! [[ -n "$path" ]]; then
+        log.error "Warning: $lib not found at /usr/lib! install it."
+        exit 1
+    else
+        if ! [[ -f $TARGET_DIR/$lib ]]; then
+            log.sub "Copying $path"
+            cp $path* $TARGET_DIR/
+        else
+            log.sub "$path -> pass"
+        fi
+    fi
+done 
+
+
 # Generate the AppImage and try to run
 ! [[ -d build ]] && mkdir build
 rm build/* &> /dev/null
