@@ -1,5 +1,45 @@
 #!/bin/sh
-# Detect display backend and set correct environment variables
+
+# Detect AppDir
+APPDIR="$(dirname "$(readlink -f "$0")")"
+export APPDIR
+
+# Set paths
+export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib64:$LD_LIBRARY_PATH"
+
+# Redirect WEBKIT process to right location
+export WEBKIT_EXEC_PATH="$APPDIR/usr/lib/webkit2gtk-4.0"
+export WEBKIT_FORCE_SANDBOX=0
+
+# WebKit Check
+if [ ! -x "$WEBKIT_EXEC_PATH/WebKitNetworkProcess" ]; then
+    echo "ERROR: WebKitNetworkProcess not found!: $WEBKIT_EXEC_PATH/WebKitNetworkProcess" >&2
+    exec $APPDIR/usr/bin/notify 'ERR: WebKitNetworkProcess' "ERROR: WebKitNetworkProcess not found!: $WEBKIT_EXEC_PATH/WebKitNetworkProcess"
+    exit 1
+fi
+if [ ! -x "$WEBKIT_EXEC_PATH/WebKitWebProcess" ]; then
+    echo "ERROR: WebKitWebProcess found!: $WEBKIT_EXEC_PATH/WebKitWebProcess" >&2
+    exec $APPDIR/usr/bin/notify 'ERR: WEbkitWebProcess' "ERROR: WebKitWebProcess found!: $WEBKIT_EXEC_PATH/WebKitWebProcess"
+    exit 1
+fi
+
+# Lib Checkup
+if ! [[ -d /usr/lib/webkit2gtk-4.0 ]]; then
+    if [ "$USER" == "root" ]; then
+        cp -r "$APPDIR/usr/lib/webkit2gtk-4.0/" /usr/lib/webkit2gtk-4.0/ &> /tmp/webkit2gtk-4.0.log
+        if ! [[ -d /usr/lib/webkit2gtk-4.0 ]]; then
+            exec $APPDIR/usr/bin/notify 'ERR: webkit2gtk-4.0 installation failed.' '$(cat /tmp/webkit2gtk-4.0.log)'  
+        else
+            exec $APPDIR/usr/bin/notify 'Linux Web View' 'webkit2gtk-4.0 installed successfully.'  
+        fi
+        exit 0
+    else
+        exec $APPDIR/usr/bin/notify 'LIB ERR: /usr/lib/webkit2gtk-4.0' "WebKit2GTK 4.0 is missing. Please run the program as root once to install it, after which it will be available for use."
+    fi   
+fi
+
+
+# Detect display backend (Wayland or X11)
 if [ -n "$WAYLAND_DISPLAY" ]; then
     export GDK_BACKEND=wayland
     export WEBKIT_DISABLE_COMPOSITING_MODE=1
@@ -7,27 +47,35 @@ else
     export GDK_BACKEND=x11
 fi
 
-export GST_PLUGIN_PATH="$APPDIR/usr/lib/gstreamer-1.0"
-export LD_LIBRARY_PATH="$APPDIR/usr/lib:$LD_LIBRARY_PATH"
+# Application binaries
+WEBVIEWER="$APPDIR/usr/bin/webviewer"
+LOCALVIEWER="$APPDIR/usr/bin/localviewer"
 
-# Run the application
-HERE="$(dirname "$(readlink -f "$0")")"
-
-if [[ "$@" =~ ^(http) ]]; then
-    exec "$HERE/usr/bin/webviewer" "$@"
-elif [[ "$@" =~ (.html) ]]; then
-    if [[ "$@" =~ ^(/) ]]; then
-        ! [[ -f "$@" ]] && echo -e "ERROR: File Not Found! ($@)" && exit 1
-        exec "$HERE/usr/bin/localviewer" "$@"
-    else
-        ! [[ -f "$PWD/$@" ]] && echo -e "ERROR: File Not Found! ($PWD/$@)" && exit 1
-        exec "$HERE/usr/bin/localviewer" "$PWD/$@"
-    fi
-else
-    # Uncomment and run html file :)
-    #exec "$HERE/usr/bin/localviewer" $HERE/usr/web/index.html
-    echo -e "You can just set path of html file or valid URL!"
+# Validate arguments
+if [ -z "$1" ]; then
+    echo "Usage: $0 <URL or HTML file path>"
     exit 1
 fi
 
+ARG="$1"
 
+# Handle URLs (http/https)
+if echo "$ARG" | grep -Eiq '^https?://'; then
+    exec "$WEBVIEWER" "$ARG"
+fi
+
+# Handle local HTML files
+if echo "$ARG" | grep -Eiq '\.html?$'; then
+    if [ -f "$ARG" ]; then
+        exec "$LOCALVIEWER" "$ARG"
+    elif [ -f "$PWD/$ARG" ]; then
+        exec "$LOCALVIEWER" "$PWD/$ARG"
+    else
+        echo "ERROR: File not found! ($ARG)"
+        exit 1
+    fi
+fi
+
+# Default error message
+echo "ERROR: Invalid input. Provide a valid URL or an existing HTML file."
+exit 1
