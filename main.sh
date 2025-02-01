@@ -14,13 +14,13 @@ if ! command -v gcc &>/dev/null; then
     
     # Update package list and install required dependencies
 
-    if  apt update &> /dev/null && apt install -y gcc g++ make cmake file libwebkit2gtk-4.0-dev libgtk-3-dev libglib2.0-bin build-essential libfuse2 wget gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly ; then
+    if  apt update &> /dev/null && apt install -y gcc g++ make cmake file libsoup-3.0-0  libsoup2.4-1 libwebkit2gtk-4.0-dev libgtk-3-dev libglib2.0-bin build-essential libfuse2 wget gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly ; then
         log.error "Failed to install dependencies. Exiting..."
         log.sub "try to install manualy."
         [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
         exit 1
     else
-        pacman -Sy --noconfirm gcc file webkit2gtk gtk3 glib2 base-devel fuse2 cmake wget || {
+        pacman -Sy --noconfirm gcc file webkit2gtk gtk3 glib2 libsoup base-devel fuse2 cmake wget || {
         log.error "Failed to install dependencies. Exiting..."
         log.sub "try to install manualy."
         [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
@@ -85,41 +85,11 @@ log.sub "SAVED -> webview-app.AppDir/usr/bin/notify"
 
 #---------------------------------------------------------------------
 
-# Define the target directory
-TARGET_DIR="webview-app.AppDir/usr/lib"
-
-# Create the target directory if it doesn't exist
-mkdir -p "$TARGET_DIR"
-
-# List of library names
-libs=(
-    "libgio-2.0.so"
-    "libglib-2.0.so"
-    "libgobject-2.0.so"
-    "libgtk-3.so"
-    "libjavascriptcoregtk-4.0.so"
-    "libwebkit2gtk-4.0.so"
-)
-
-log.info "Copying libraries to $TARGET_DIR..."
-
-! [[ -d  webview-app.AppDir/usr/lib/webkit2gtk-4.0/ ]] && log.sub "Copying usr/lib/webkit2gtk-4.0/" && cp -r /usr/lib/webkit2gtk-4.0/ webview-app.AppDir/usr/lib
-
-# Loop trough each library and check they are exist, if it is copy it to the target directory
-for lib in "${libs[@]}"; do
-    path=$(ldconfig -p | grep "$lib" | awk '{print $NF}' | head -n 1)
-    if ! [[ -n "$path" ]]; then
-        log.error "Warning: $lib not found at /usr/lib! install it."
-        exit 1
-    else
-        if ! [[ -f $TARGET_DIR/$lib ]]; then
-            log.sub "Copying $path"
-            cp $path* $TARGET_DIR/
-        else
-            log.sub "$path -> pass"
-        fi
-    fi
-done 
+if ! [[ -d webview-app.AppDir/usr/lib/webkit2gtk-4.0 ]]; then
+    source lib.sh.d/copylib.sh
+else
+    log.info "Depends check passed."
+fi
 
 
 # Generate the AppImage and try to run
