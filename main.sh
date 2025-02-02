@@ -12,7 +12,7 @@ fi
 #----------------------------/Depends Installtion\----------------------------
 
 # Ensure GCC is installed
-if ! command -v gcc file zenity cmake wget &>/dev/null; then
+if ! command -v gcc; then
     log.info "Setting up dependencies..."
     
     # Update package list and install required dependencies
