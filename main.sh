@@ -2,25 +2,28 @@
 
 # Load logging utilities
 source lib.sh.d/log.lib
-
+source lib.sh.d/colors.lib
 # PHT Detection Warning
 if [[ -f ./module.pht ]]; then
     log.warn "PHT Detected! The build process may successful but run is not guaranteed"
 fi
 
+
+#----------------------------/Depends Installtion\----------------------------
+
 # Ensure GCC is installed
-if ! command -v gcc &>/dev/null; then
+if ! command -v gcc file zenity cmake wget &>/dev/null; then
     log.info "Setting up dependencies..."
     
     # Update package list and install required dependencies
 
-    if  apt update &> /dev/null && apt install -y gcc g++ make cmake file libsoup-3.0-0  libsoup2.4-1 libwebkit2gtk-4.0-dev libgtk-3-dev libglib2.0-bin build-essential libfuse2 wget gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly ; then
+    if  apt update &> /dev/null && apt install -y gcc g++ make cmake file libsoup-3.0-0 zenity libsoup2.4-1 libwebkit2gtk-4.0-dev libgtk-3-dev libglib2.0-bin build-essential libfuse2 wget gstreamer1.0-libav gstreamer1.0-plugins-bad gstreamer1.0-plugins-ugly ; then
         log.error "Failed to install dependencies. Exiting..."
         log.sub "try to install manualy."
         [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
         exit 1
     else
-        pacman -Sy --noconfirm gcc file webkit2gtk gtk3 glib2 libsoup base-devel fuse2 cmake wget || {
+        pacman -Sy --noconfirm gcc file webkit2gtk zenity gtk3 glib2 libsoup base-devel fuse2 cmake wget  gstreamer gst-plugins-good gst-plugins-bad gst-plugins-ugly gst-libav gst-plugin-gtk || {
         log.error "Failed to install dependencies. Exiting..."
         log.sub "try to install manualy."
         [[ -f ./module.pht ]] && log.sub "Access to shell : pht run LinuxWebView -c bash"
@@ -41,7 +44,10 @@ if ! command -v gcc &>/dev/null; then
     fi
 fi
 
-# Compile the vebviewer
+
+#----------------------------/WebViewer Compile\----------------------------
+
+# Compile the webviewer
 log.info "Compiling the application..."
 
 
@@ -71,26 +77,16 @@ gcc localviewer.c -o webview-app.AppDir/usr/bin/localviewer \
 log.done "GCC build completed successfully. (localviewer)"
 log.sub "SAVED -> webview-app.AppDir/usr/bin/localviewer"
 
-# notify.c
-gcc notify.c -o webview-app.AppDir/usr/bin/notify \
-    `pkg-config --cflags --libs gtk+-3.0` &> /home/notifybuild.log || {
-        log.error "Compilation failed."
-        log.sub "LOG: /home/notifybuild.log"
-        [[ $1 =~ (workflow|CI|CD) ]] && cat /home/notifybuild.log
-        exit 1
-    }
 
-log.done "GCC build completed successfully. (notify)"
-log.sub "SAVED -> webview-app.AppDir/usr/bin/notify"
-
-#---------------------------------------------------------------------
-
+#----------------------------/AppImage Depends Installation\----------------------------
 if ! [[ -d webview-app.AppDir/usr/lib/webkit2gtk-4.0 ]]; then
     source lib.sh.d/copylib.sh
 else
     log.info "Depends check passed."
 fi
 
+
+#----------------------------/AppImage Build\----------------------------
 
 # Generate the AppImage and try to run
 ! [[ -d build ]] && mkdir build

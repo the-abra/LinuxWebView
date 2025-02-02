@@ -1,40 +1,59 @@
-#!/bin/sh
+#!/bin/bash
 
 # Detect AppDir
 APPDIR="$(dirname "$(readlink -f "$0")")"
 export APPDIR
+
+
+source $APPDIR/func4bash/colors.lib
+source $APPDIR/func4bash/log.lib
 
 # Set paths
 export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib64:$LD_LIBRARY_PATH"
 
 # Redirect WEBKIT process to right location
 export WEBKIT_EXEC_PATH="$APPDIR/usr/lib/webkit2gtk-4.0"
-export WEBKIT_FORCE_SANDBOX=0
+#export WEBKIT_FORCE_SANDBOX=0
+#export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 no more allowed
 
-# WebKit Check
+rm /tmp/webviewer.log &> /dev/null
+log.info "Log: /tmp/webviewer.log"
+
+# WebKit and zenity Check
+
+if [ ! -x $APPDIR/usr/bin/zenity ]; then
+    log.error "Zenity not found in appimage!"
+    exit 1
+fi
+
+function zenity() {
+    "$APPDIR/usr/bin/zenity" "$@" &> /dev/null
+}
+
+
 if [ ! -x "$WEBKIT_EXEC_PATH/WebKitNetworkProcess" ]; then
     echo "ERROR: WebKitNetworkProcess not found!: $WEBKIT_EXEC_PATH/WebKitNetworkProcess" >&2
-    exec $APPDIR/usr/bin/notify 'ERR: WebKitNetworkProcess' "ERROR: WebKitNetworkProcess not found!: $WEBKIT_EXEC_PATH/WebKitNetworkProcess"
+    zenity --error --title='ERR: WebKitNetworkProcess' --text="ERROR: WebKitNetworkProcess not found!: $WEBKIT_EXEC_PATH/WebKitNetworkProcess"
     exit 1
 fi
 if [ ! -x "$WEBKIT_EXEC_PATH/WebKitWebProcess" ]; then
     echo "ERROR: WebKitWebProcess found!: $WEBKIT_EXEC_PATH/WebKitWebProcess" >&2
-    exec $APPDIR/usr/bin/notify 'ERR: WEbkitWebProcess' "ERROR: WebKitWebProcess found!: $WEBKIT_EXEC_PATH/WebKitWebProcess"
+    zenity --error --title='ERR: WEbkitWebProcess' --text="ERROR: WebKitWebProcess not found!: $WEBKIT_EXEC_PATH/WebKitWebProcess"
     exit 1
 fi
 
 # Lib Checkup
 if ! [[ -d /usr/lib/webkit2gtk-4.0 ]]; then
     if [ "$USER" == "root" ]; then
-        cp -r "$APPDIR/usr/lib/webkit2gtk-4.0/" /usr/lib/webkit2gtk-4.0/ &> /tmp/webkit2gtk-4.0.log
+        cp -r "$APPDIR/usr/lib/webkit2gtk-4.0/" /usr/lib/webkit2gtk-4.0/ &> /tmp/webviewer.log
         if ! [[ -d /usr/lib/webkit2gtk-4.0 ]]; then
-            exec $APPDIR/usr/bin/notify 'ERR: webkit2gtk-4.0 installation failed.' '$(cat /tmp/webkit2gtk-4.0.log)'  
+            zenity --info 'ERR: webkit2gtk-4.0 installation failed.' '$(cat /tmp/webviewer.log)'  
         else
-            exec $APPDIR/usr/bin/notify 'Linux Web View' 'webkit2gtk-4.0 installed successfully.'  
+            zenity --info 'Linux Web View' 'webkit2gtk-4.0 installed successfully.'  
         fi
         exit 0
     else
-        exec $APPDIR/usr/bin/notify 'LIB ERR: /usr/lib/webkit2gtk-4.0' "WebKit2GTK 4.0 is missing. Please run the program as root once to install it, after which it will be available for use."
+        zenity --info 'LIB ERR: /usr/lib/webkit2gtk-4.0' "WebKit2GTK 4.0 is missing. Please run the program as root once to install it, after which it will be available for use."
     fi   
 fi
 
@@ -47,35 +66,45 @@ else
     export GDK_BACKEND=x11
 fi
 
+if [[ $@ =~ "--allow-jts" ]]; then
+    zenity --question --title="JS To Shell Access" --text="$1 wants to use js to shell feature. Is that okay?" || {
+        log.error "JS To Shell Access Denied for $URL"
+        exit 1
+    }
+    log.warn "Be careful, $1 has been authorized for use JS To Shell"
+    [[ $UID == 0 ]] && log.sub "${RED}Root${WHITE} permission granted."
+fi
+
+
 # Application binaries
 WEBVIEWER="$APPDIR/usr/bin/webviewer"
 LOCALVIEWER="$APPDIR/usr/bin/localviewer"
 
 # Validate arguments
 if [ -z "$1" ]; then
-    echo "Usage: $0 <URL or HTML file path>"
+    log.warn "Usage: $0 <URL or HTML file path>"
     exit 1
 fi
 
-ARG="$1"
+URL="$1"
 
 # Handle URLs (http/https)
-if echo "$ARG" | grep -Eiq '^https?://'; then
-    exec "$WEBVIEWER" "$ARG"
+if echo "$URL" | grep -Eiq '^https?://'; then
+    exec "$WEBVIEWER" "$URL" 2>/tmp/webviewer.log
 fi
 
 # Handle local HTML files
-if echo "$ARG" | grep -Eiq '\.html?$'; then
-    if [ -f "$ARG" ]; then
-        exec "$LOCALVIEWER" "$ARG"
-    elif [ -f "$PWD/$ARG" ]; then
-        exec "$LOCALVIEWER" "$PWD/$ARG"
+if echo "$URL" | grep -Eiq '\.html?$'; then
+    if [ -f "$URL" ]; then
+        exec "$LOCALVIEWER" "$URL" 2>/tmp/webviewer.log
+    elif [ -f "$PWD/$URL" ]; then
+        exec "$LOCALVIEWER" "$PWD/$URL" 2>/tmp/webviewer.log
     else
-        echo "ERROR: File not found! ($ARG)"
+        log.error "File not found! ($URL)"
         exit 1
     fi
 fi
 
 # Default error message
-echo "ERROR: Invalid input. Provide a valid URL or an existing HTML file."
+log.error "Invalid input. Provide a valid URL or an existing HTML file."
 exit 1

@@ -1,11 +1,13 @@
 #!/bin/bash
 
+log.info "Checking and copying dependencies."
+
 # Target directory for copied libraries and dependencies
 TARGET_DIR="webview-app.AppDir"
 
 # Function to list, copy dependencies for a given library pattern
 copy_dependencies() {
-  log.info "Checking and copying dependencies for pattern: $1"
+  log.sub "For pattern: [${MAGENTA}$1${WHITE}]"
   
   # Get the list of libraries matching the pattern
   libs=$(ldconfig -p | grep "$1" | awk '{print $NF}')
@@ -35,7 +37,7 @@ copy_dependencies() {
   done
 }
 
-# Create the target directory structure if it doesn't exist
+# Create the target directory structure if doesn't exist
 mkdir -p "$TARGET_DIR"
 
 # List and copy dependencies for GTK, WebKitGTK, GIO, and GLib
@@ -44,6 +46,21 @@ copy_dependencies "webkit"
 copy_dependencies "gio"
 copy_dependencies "glib"
 
-cp -r /usr/lib/webkit2gtk-4.0/ webview-app.AppDir/usr/lib/
+log.sub "[${MAGENTA}Copy${WHITE}]: /usr/bin/zenity"
+cp /usr/bin/zenity webview-app.AppDir/usr/bin/zenity || exit 1
+ldd /usr/bin/zenity | awk 'NF == 4 {print $3}' | grep '^/' | xargs cp -L --parents -t webview-app.AppDir/ || exit 1
+
+
+log.sub "[${MAGENTA}Copy${WHITE}]: /usr/lib/webkit2gtk-4.0/"
+cp -r /usr/lib/webkit2gtk-4.0/ webview-app.AppDir/usr/lib/ || exit 1
+
+log.sub "[${MAGENTA}Copy${WHITE}]: /usr/lib/gstreamer-1.0/"
+cp -r /usr/lib/gstreamer-1.0/ webview-app.AppDir/usr/lib || exit 1
+
+log.sub "[${MAGENTA}Copy${WHITE}]: /usr/lib64/libgst*"
+cp /usr/lib64/libgst* webview-app.AppDir/usr/lib64/ || exit 1
+
+log.sub "[${MAGENTA}Copy${WHITE}]: /usr/lib/gstreamer-1.0/*.so" || exit 1
+ldd /usr/lib/gstreamer-1.0/*.so | awk '{print $3}' | grep -v "^(" | sort -u | xargs -I{} cp --parents {} webview-app.AppDir/ || exit 1
 
 echo "All libraries and their dependencies copied to $TARGET_DIR"
