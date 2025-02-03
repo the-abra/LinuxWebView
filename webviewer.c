@@ -1,11 +1,12 @@
 #include <gtk/gtk.h>
 #include <webkit2/webkit2.h>
-#include <gio/gio.h>
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-static char url[1024] = "https://www.example.com"; // Default URL
+static char url[1024];
 
-// Callback function to update the window title
+// Callback function to update the window title dynamically
 static void title_changed_callback(WebKitWebView *webview, GParamSpec *pspec, gpointer user_data) {
     GtkWindow *window = GTK_WINDOW(user_data);
     const gchar *title = webkit_web_view_get_title(webview);
@@ -46,7 +47,8 @@ static void activate(GtkApplication *app, gpointer user_data) {
         )
     );
 
-    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webview), url);
+    // Load the provided URL or default to a blank page
+    webkit_web_view_load_uri(WEBKIT_WEB_VIEW(webview), url[0] ? url : "about:blank");
 
     // Connect the title change signal
     g_signal_connect(webview, "notify::title", G_CALLBACK(title_changed_callback), window);
@@ -58,8 +60,6 @@ static void activate(GtkApplication *app, gpointer user_data) {
     gtk_widget_show_all(window);
 }
 
-
-
 // Handle command-line arguments properly
 static int command_line_handler(GApplication *app, GApplicationCommandLine *cmdline, gpointer user_data) {
     gchar **args;
@@ -68,7 +68,11 @@ static int command_line_handler(GApplication *app, GApplicationCommandLine *cmdl
     args = g_application_command_line_get_arguments(cmdline, &argc);
 
     if (argc > 1) {
-        strncpy(url, args[1], sizeof(url) - 1);
+        if (g_str_has_prefix(args[1], "file://") || g_str_has_prefix(args[1], "http://") || g_str_has_prefix(args[1], "https://")) {
+            strncpy(url, args[1], sizeof(url) - 1);
+        } else {
+            snprintf(url, sizeof(url), "file://%s", args[1]);
+        }
         url[sizeof(url) - 1] = '\0'; // Ensure null termination
     }
 
@@ -81,7 +85,7 @@ int main(int argc, char **argv) {
     GtkApplication *app;
     int status;
 
-    // Create a new GTK application with the correct application ID
+    // Create a new GTK application with command-line handling
     app = gtk_application_new("com.the-abra.WebView", G_APPLICATION_HANDLES_COMMAND_LINE);
 
     // Connect signals
