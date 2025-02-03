@@ -81,13 +81,11 @@ fi
 
 
 # Validate arguments
-if ! [[ $1 =~ (http|html) ]]; then
-    log.warn "Usage: ./webview.AppImage <URL or HTML file path>"
-    exit 1
-else
-    URL="$1"
-    exec "$WEBVIEWER" "$URL"  2>/tmp/webviewer.log
+URL="$1"
+if [[ ! "$URL" =~ ^/ ]] && [[ ! "$URL" =~ ^https?:// ]]; then
+    URL="$PWD/$URL"
 fi
+exec "$WEBVIEWER" "$URL"  2>/tmp/webviewer.log
 
 # Default error message
 log.error "Invalid input. Provide a valid URL or an existing HTML file."
