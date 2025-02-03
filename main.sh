@@ -52,30 +52,26 @@ log.info "Compiling the application..."
 
 
 # webviewer.c
-gcc webviewer.c -o webview-app.AppDir/usr/bin/webviewer \
-    $(pkg-config --cflags --libs  webkit2gtk-4.0 gtk+-3.0) \
-    -static-libgcc -static-libstdc++ &> /home/webviewer.log || {
+gcc $(pkg-config --cflags --libs glib-2.0) -o webview-app.AppDir/usr/bin/webviewer webviewer.c $(pkg-config --cflags --libs webkit2gtk-4.0) &> /home/webviewer.log || {
         log.error "Compilation failed."
         log.sub "LOG: /home/webviewer.log"
         [[ $1 =~ (workflow|CI|CD) ]] && cat /home/webviewer.log
         exit 1
-    }
-
+}
 log.done "GCC build completed successfully. (webviewer)"
 log.sub "SAVED -> webview-app.AppDir/usr/bin/webviewer"
 
-# localviewer.c
-gcc localviewer.c -o webview-app.AppDir/usr/bin/localviewer \
-    $(pkg-config --cflags --libs  webkit2gtk-4.0 gtk+-3.0) \
-    -static-libgcc -static-libstdc++ &> /home/localviewer.log || {
-        log.error "Compilation failed."
-        log.sub "LOG: /home/localviewer.log"
-        [[ $1 =~ (workflow|CI|CD) ]] && cat /home/localviewer.log
-        exit 1
-    }
 
-log.done "GCC build completed successfully. (localviewer)"
-log.sub "SAVED -> webview-app.AppDir/usr/bin/localviewer"
+# webviewer-sh.c
+gcc $(pkg-config --cflags --libs glib-2.0) -o webview-app.AppDir/usr/bin/webviewer-sh webviewer-sh.c $(pkg-config --cflags --libs webkit2gtk-4.0) &> /home/webviewer.log || {
+        log.error "Compilation failed."
+        log.sub "LOG: /home/webviewer.log"
+        [[ $1 =~ (workflow|CI|CD) ]] && cat /home/webviewer.log
+        exit 1
+}
+log.done "GCC build completed successfully. (webviewer-sh)"
+log.sub "SAVED -> webview-app.AppDir/usr/bin/webviewer-sh"
+
 
 
 #----------------------------/AppImage Depends Installation\----------------------------

@@ -13,8 +13,6 @@ export LD_LIBRARY_PATH="$APPDIR/usr/lib:$APPDIR/usr/lib64:$LD_LIBRARY_PATH"
 
 # Redirect WEBKIT process to right location
 export WEBKIT_EXEC_PATH="$APPDIR/usr/lib/webkit2gtk-4.0"
-#export WEBKIT_FORCE_SANDBOX=0
-#export WEBKIT_DISABLE_SANDBOX_THIS_IS_DANGEROUS=1 no more allowed
 
 rm /tmp/webviewer.log &> /dev/null
 log.info "Log: /tmp/webviewer.log"
@@ -29,6 +27,9 @@ fi
 function zenity() {
     "$APPDIR/usr/bin/zenity" "$@" &> /dev/null
 }
+
+
+[[ $1 == "--notify" ]] && zenity --info --text="$2" --title="Linux Web View"
 
 
 if [ ! -x "$WEBKIT_EXEC_PATH/WebKitNetworkProcess" ]; then
@@ -73,36 +74,19 @@ if [[ $@ =~ "--allow-jts" ]]; then
     }
     log.warn "Be careful, $1 has been authorized for use JS To Shell"
     [[ $UID == 0 ]] && log.sub "${RED}Root${WHITE} permission granted."
+    WEBVIEWER="$APPDIR/usr/bin/webviewer-sh"
+else
+    WEBVIEWER="$APPDIR/usr/bin/webviewer"
 fi
 
-
-# Application binaries
-WEBVIEWER="$APPDIR/usr/bin/webviewer"
-LOCALVIEWER="$APPDIR/usr/bin/localviewer"
 
 # Validate arguments
-if [ -z "$1" ]; then
-    log.warn "Usage: $0 <URL or HTML file path>"
+if ! [[ $1 =~ (http|html) ]]; then
+    log.warn "Usage: ./webview.AppImage <URL or HTML file path>"
     exit 1
-fi
-
-URL="$1"
-
-# Handle URLs (http/https)
-if echo "$URL" | grep -Eiq '^https?://'; then
-    exec "$WEBVIEWER" "$URL" 2>/tmp/webviewer.log
-fi
-
-# Handle local HTML files
-if echo "$URL" | grep -Eiq '\.html?$'; then
-    if [ -f "$URL" ]; then
-        exec "$LOCALVIEWER" "$URL" 2>/tmp/webviewer.log
-    elif [ -f "$PWD/$URL" ]; then
-        exec "$LOCALVIEWER" "$PWD/$URL" 2>/tmp/webviewer.log
-    else
-        log.error "File not found! ($URL)"
-        exit 1
-    fi
+else
+    URL="$1"
+    exec "$WEBVIEWER" "$URL"  2>/tmp/webviewer.log
 fi
 
 # Default error message

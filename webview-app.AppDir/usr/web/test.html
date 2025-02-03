@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebKit Shell Command Executor</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            padding: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+        }
+        #output {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            background: #f9f9f9;
+            min-height: 50px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <h1>WebKit Shell Command Executor</h1>
+    <p>Click a button to execute a shell command.</p>
+    
+    <button onclick="runShellCommand('ls')">Run ls</button>
+    <button onclick="runShellCommand('command -v dolphin && dolphin')">Run dolphin</button>
+
+    <h2>Output:</h2>
+    <textarea id="output">Waiting for command...</textarea>
+
+    <script>
+      // Function to send command to the C application
+        function runShellCommand(command) {
+            if (window.shell) {
+                window.shell(command);
+            } else {
+                alert("JS To Shell is not available!");
+            }
+        }
+
+        window.onShellResult = function(output) {
+            console.log("Shell result:", output);
+            document.getElementById("output").value = output;
+        };
+
+
+
+    </script>
+</body>
+</html>
