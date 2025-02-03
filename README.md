@@ -1,5 +1,7 @@
-# LinuxWebView
+# LinuxWebView ()
 Web View System for Linux
+
+📌 Note: This project is not designed with any specific ethical constraints. Use it at your own discretion—including for **RCE** if you wish 😈
 
 ---
 
